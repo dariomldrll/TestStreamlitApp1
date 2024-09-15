@@ -6,6 +6,24 @@ from langgraph.graph import StateGraph, MessagesState, START
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 
+# Definisci alcuni strumenti di esempio
+def add(a: int, b: int) -> int:
+    """Somma a e b."""
+    return a + b
+
+def multiply(a: int, b: int) -> int:
+    """Moltiplica a e b."""
+    return a * b
+
+def divide(a: int, b: int) -> float:
+    """Divide a per b."""
+    if b == 0:
+        raise ValueError("Non è possibile dividere per zero.")
+    return a / b
+
+# Elenco degli strumenti
+tools = [add, multiply, divide]
+
 # Carica la chiave API di OpenAI dalle variabili d'ambiente
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
@@ -15,7 +33,7 @@ if not openai_api_key:
 else:
     # Inizializza il modello LLM
     llm = ChatOpenAI(model="gpt-4o-mini", api_key=openai_api_key)
-    llm_with_tools = llm.bind_tools([])  # Se hai strumenti, puoi passarli qui
+    llm_with_tools = llm.bind_tools(tools)  # Passiamo gli strumenti qui
 
     # Definizione del nodo assistant
     sys_msg = SystemMessage(content="Sei un assistente utile incaricato di eseguire operazioni aritmetiche su un insieme di input.")
@@ -28,7 +46,7 @@ else:
 
     # Aggiunta dei nodi
     builder.add_node("assistant", assistant)
-    builder.add_node("tools", ToolNode([]))  # Aggiungi gli strumenti se ne hai
+    builder.add_node("tools", ToolNode(tools))  # Passiamo gli strumenti al nodo ToolNode
 
     # Definizione degli archi
     builder.add_edge(START, "assistant")
